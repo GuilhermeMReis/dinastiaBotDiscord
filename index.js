@@ -21,12 +21,11 @@ client.once('ready', async () => {
         );
 
         const embed = new EmbedBuilder()
-            .setTitle('Validação de Email de Compra')
-            .setDescription('Se você adquiriu um produto da Hotmart, clique no botão abaixo.')
+            .setTitle('DinastIA: Validar compra!')
+            .setDescription('Se você adquiriu um produto da DinastIA, clique no botão abaixo.')
             .addFields({ name: 'Orientações:', value: 'Clique no botão "Solicitar Verificação" para começar.' })
             .setColor('Green')
-            .setThumbnail('https://via.placeholder.com/100')
-            .setFooter({ text: 'Bot Forms', iconURL: 'https://via.placeholder.com/50' });
+            .setThumbnail('https://via.placeholder.com/100');
 
         await channel.send({ embeds: [embed], components: [row] });
     } else {
@@ -51,7 +50,7 @@ client.on('interactionCreate', async (interaction) => {
                             new ActionRowBuilder().addComponents(
                                 new TextInputBuilder()
                                     .setCustomId('email')
-                                    .setLabel('Digite seu email da Hotmart')
+                                    .setLabel('Digite o email usado na compra.')
                                     .setStyle(TextInputStyle.Short)
                                     .setPlaceholder('exemplo@email.com')
                                     .setRequired(true)
@@ -97,7 +96,7 @@ client.on('interactionCreate', async (interaction) => {
                         if (response.status === 200) {
                             const approvedEmbed = new EmbedBuilder()
                                 .setTitle('Aprovado')
-                                .setDescription('Seu email foi verificado com sucesso!')
+                                .setDescription('Seu email foi verificado com sucesso! Seja bem vindo(a) DinastIA!')
                                 .setColor('Green');
 
                             await interaction.editReply({ embeds: [approvedEmbed] });
@@ -108,7 +107,7 @@ client.on('interactionCreate', async (interaction) => {
                         console.error('Erro na requisição do webhook:', error);
                         const errorEmbed = new EmbedBuilder()
                             .setTitle('Erro')
-                            .setDescription('Ocorreu um erro ao verificar seu email. Por favor, tente novamente mais tarde.')
+                            .setDescription('Infelizmente não conseguimos verificar seu email. Por favor, confirme se o seus dados estão corretos, tente novamente ou chame um membro de nossa equipe.')
                             .setColor('Red');
 
                         await interaction.editReply({ embeds: [errorEmbed] });
