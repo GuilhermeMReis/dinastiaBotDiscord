@@ -35,67 +35,105 @@ client.once('ready', async () => {
 });
 
 client.on('interactionCreate', async (interaction) => {
-    if (interaction.isButton()) {
-        if (interaction.channelId !== ALLOWED_CHANNEL_ID) {
-            await interaction.reply({ content: "Este bot só pode ser usado no canal designado.", flags: MessageFlags.Ephemeral });
-            return;
-        }
+    try {
+        if (interaction.isButton()) {
+            if (interaction.channelId !== ALLOWED_CHANNEL_ID) {
+                await interaction.reply({ content: "Este bot só pode ser usado no canal designado.", flags: MessageFlags.Ephemeral });
+                return;
+            }
 
-        if (interaction.customId === 'email_request') {
-            const modal = new ModalBuilder()
-                .setCustomId('email_form')
-                .setTitle('Verificação de Email de Compra')
-                .addComponents(
-                    new ActionRowBuilder().addComponents(
-                        new TextInputBuilder()
-                            .setCustomId('email')
-                            .setLabel('Digite seu email da Hotmart')
-                            .setStyle(TextInputStyle.Short)
-                            .setPlaceholder('exemplo@email.com')
-                    )
-                );
+            if (interaction.customId === 'email_request') {
+                try {
+                    const modal = new ModalBuilder()
+                        .setCustomId('email_form')
+                        .setTitle('Verificação de Email de Compra')
+                        .addComponents(
+                            new ActionRowBuilder().addComponents(
+                                new TextInputBuilder()
+                                    .setCustomId('email')
+                                    .setLabel('Digite seu email da Hotmart')
+                                    .setStyle(TextInputStyle.Short)
+                                    .setPlaceholder('exemplo@email.com')
+                                    .setRequired(true)
+                            )
+                        );
 
-            await interaction.showModal(modal);
-        }
-    } else if (interaction.isModalSubmit()) {
-        if (interaction.customId === 'email_form') {
-            const email = interaction.fields.getTextInputValue('email');
-
-            const waitingEmbed = new EmbedBuilder()
-                .setTitle('Processando')
-                .setDescription('Aguarde enquanto verificamos seu email.')
-                .setColor('Yellow');
-
-            await interaction.reply({ embeds: [waitingEmbed], flags: MessageFlags.Ephemeral });
-
-            try {
-                const response = await axios.post(WEBHOOK_URL, {
-                    email,
-                    discordId: interaction.user.id,
-                    username: interaction.user.username
-                }, {
-                    headers: {
-                        'Authorization': WEBHOOK_API_KEY
+                    await interaction.showModal(modal);
+                } catch (error) {
+                    console.error('Erro ao mostrar modal:', error);
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({ 
+                            content: 'Ocorreu um erro ao abrir o formulário. Por favor, tente novamente.', 
+                            flags: MessageFlags.Ephemeral 
+                        });
                     }
-                });
-
-                if (response.status === 200) {
-                    const approvedEmbed = new EmbedBuilder()
-                        .setTitle('Aprovado')
-                        .setDescription('Seu email foi verificado com sucesso!')
-                        .setColor('Green');
-
-                    await interaction.editReply({ embeds: [approvedEmbed] });
-                } else {
-                    throw new Error('Resposta inválida do webhook.');
                 }
-            } catch (error) {
-                const errorEmbed = new EmbedBuilder()
-                    .setTitle('Erro')
-                    .setDescription('Ocorreu um erro ao verificar seu email. Por favor, tente novamente mais tarde.')
-                    .setColor('Red');
+            }
+        } else if (interaction.isModalSubmit()) {
+            if (interaction.customId === 'email_form') {
+                try {
+                    const email = interaction.fields.getTextInputValue('email');
 
-                await interaction.editReply({ embeds: [errorEmbed] });
+                    await interaction.deferReply({ ephemeral: true });
+
+                    const waitingEmbed = new EmbedBuilder()
+                        .setTitle('Processando')
+                        .setDescription('Aguarde enquanto verificamos seu email.')
+                        .setColor('Yellow');
+
+                    await interaction.editReply({ embeds: [waitingEmbed] });
+
+                    try {
+                        const response = await axios.post(WEBHOOK_URL, {
+                            email,
+                            discordId: interaction.user.id,
+                            username: interaction.user.username
+                        }, {
+                            headers: {
+                                'Authorization': WEBHOOK_API_KEY
+                            }
+                        });
+
+                        if (response.status === 200) {
+                            const approvedEmbed = new EmbedBuilder()
+                                .setTitle('Aprovado')
+                                .setDescription('Seu email foi verificado com sucesso!')
+                                .setColor('Green');
+
+                            await interaction.editReply({ embeds: [approvedEmbed] });
+                        } else {
+                            throw new Error('Resposta inválida do webhook.');
+                        }
+                    } catch (error) {
+                        console.error('Erro na requisição do webhook:', error);
+                        const errorEmbed = new EmbedBuilder()
+                            .setTitle('Erro')
+                            .setDescription('Ocorreu um erro ao verificar seu email. Por favor, tente novamente mais tarde.')
+                            .setColor('Red');
+
+                        await interaction.editReply({ embeds: [errorEmbed] });
+                    }
+                } catch (error) {
+                    console.error('Erro ao processar modal:', error);
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply({ 
+                            content: 'Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.', 
+                            flags: MessageFlags.Ephemeral 
+                        });
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Erro geral na interação:', error);
+        if (!interaction.replied && !interaction.deferred) {
+            try {
+                await interaction.reply({ 
+                    content: 'Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.', 
+                    flags: MessageFlags.Ephemeral 
+                });
+            } catch (replyError) {
+                console.error('Erro ao enviar mensagem de erro:', replyError);
             }
         }
     }
