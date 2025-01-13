@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+  node-bot:
+    image: node:18
+    container_name: discord-hotmart-bot
+    restart: always
+    working_dir: /usr/src/app
+    volumes:
+      - ./bot:/usr/src/app
+    ports:
+      - "5555:3000"
+    command: bash -c "npm install && node index.js"
+    environment:
+      DISCORD_TOKEN: MTMyODM1NjU2MjAzMjM5NDMzMg.GlyJ1d.N0RkFH2NPBQaZ9chCVMiMdmISdbrv6lNzzSCcA
+      DISCORD_CLIENT_ID: 1328356562032394332
+      DISCORD_GUILD_ID: 1042167130503774368
+      WEBHOOK_URL: https://dinastia-n8n-webhook.rdxzui.easypanel.host/webhook/discord-teste
