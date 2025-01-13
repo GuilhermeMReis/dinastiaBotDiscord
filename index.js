@@ -4,7 +4,7 @@ const axios = require('axios');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 const WEBHOOK_API_KEY = process.env.WEBHOOK_API_KEY;
-const ALLOWED_CHANNEL_ID = "1328360779233362031";
+const ALLOWED_CHANNEL_ID = process.env.ALLOWED_CHANNEL_ID;
 
 client.once('ready', async () => {
     console.log(`Bot está online como ${client.user.tag}`);
